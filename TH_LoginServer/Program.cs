@@ -1,6 +1,13 @@
 var builder = WebApplication.CreateBuilder( args );
 
 // Add services to the container.
+builder.Services.AddSingleton<StackExchange.Redis.IConnectionMultiplexer>( c =>
+{
+	var opt = StackExchange.Redis.ConfigurationOptions.Parse( builder.Configuration.GetConnectionString( "RedisConnection" ) );
+	return StackExchange.Redis.ConnectionMultiplexer.Connect( opt );
+} );
+
+builder.Services.AddSingleton( serviceProvider => ( new RedisDB(serviceProvider.GetRequiredService<StackExchange.Redis.IConnectionMultiplexer>()) ) );
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

@@ -10,18 +10,23 @@ namespace TH_LoginServer.Controllers
     {
         [Route( "api/[controller]/SignIn" )]
         [HttpPost]
-        public IActionResult SignIn([FromBody] SignInData data)
+        public IActionResult SignIn([FromBody] SignInData data, RedisDB redisDB)
         {
-            if(data.ID == "testID" && data.PW == "testPW")
-            return Ok( "OK" );
+            redisDB.SignIn( data.ID, data.PW );
+
+            if( redisDB.SignIn( data.ID, data.PW ) )
+            {
+                return Ok( "OK" );
+            }
 
             return BadRequest("FAIL");
         }
 
         [Route( "api/[controller]/SignUp" )]
         [HttpPost]
-        public IActionResult SignUp([FromBody] SignUpData data)
+        public IActionResult SignUp([FromBody] SignUpData data, RedisDB redisDB)
         {
+            redisDB.SignUp();
             return Ok( "" );
         }
 
