@@ -10,9 +10,10 @@ namespace TH_LoginServer.Controllers
         [HttpPost]
         public IActionResult SignIn( [FromBody] SignInData data, RedisDB redisDB, IHttpContextAccessor httpContextAccessor )
         {
-            string ipAddress = httpContextAccessor.HttpContext.Connection.RemoteIpAddress.ToString();
             try
             {
+                string ipAddress = httpContextAccessor.HttpContext.Connection.RemoteIpAddress.ToString();
+
                 string SignInJson = redisDB.SignIn( data.ID, data.PW, ipAddress );
 
                 if( string.IsNullOrEmpty( SignInJson ) == true )
@@ -32,7 +33,7 @@ namespace TH_LoginServer.Controllers
         [HttpPost]
         public IActionResult SignUp( [FromBody] SignUpData data, RedisDB redisDB )
         {
-            redisDB.SignUp();
+            redisDB.SignUp( data.ID, data.PW );
             return Ok( "" );
         }
 
@@ -47,12 +48,14 @@ namespace TH_LoginServer.Controllers
         {
             public string ID { get; set; } = string.Empty;
             public string PW { get; set; } = string.Empty;
+            public string Client { get; set; } = string.Empty;
         }
 
         public class SignUpData
         {
             public string ID { get; set; } = string.Empty;
             public string PW { get; set; } = string.Empty;
+            public string Client { get; set; } = string.Empty;
         }
     }
 }

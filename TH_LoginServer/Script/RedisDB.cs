@@ -47,18 +47,18 @@ public class RedisDB
         return JsonConvert.SerializeObject( userInfo );
     }
 
-    public void SignUp()
+    public void SignUp(string ID, string PW)
     {
         USERINFO info = new USERINFO();
-        info.ID = "testID";
-        info.PW = SecurityUtils.GenerateHashPassword( "testPW" );
+        info.ID = ID;
+        info.PW = SecurityUtils.GenerateHashPassword( PW );
         info.AccessToken = string.Empty;
         info.RefreshToken = null;
         info.ConnectedIP = null;
 
         string jsonInfo = JsonConvert.SerializeObject( info );
 
-        _db.StringSet( "testID", jsonInfo );
+        _db.StringSet( ID, jsonInfo );
     }
 
 
