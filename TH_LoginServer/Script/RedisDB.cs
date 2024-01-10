@@ -1,61 +1,65 @@
-﻿using StackExchange.Redis;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
+using StackExchange.Redis;
 
 public class RedisDB
 {
-	private readonly IDatabase _db;
-	private readonly IConnectionMultiplexer _redis;
+    private readonly IDatabase _db;
+    private readonly IConnectionMultiplexer _redis;
 
-	struct USERINFO
-	{
-		public string ID;
-		public string PW;
-		public string AccessToken;
-		public string RefreshToken;
-		public string IdToken;
-	}
+    struct USERINFO
+    {
+        public string ID;
+        public string PW;
+        public string AccessToken;
+        public SecurityUtils.RefreshToken RefreshToken;
+        public string ConnectedIP;
+    }
 
-	public RedisDB( IConnectionMultiplexer redis )
-	{
-		_redis = redis;
-		_db = redis.GetDatabase();
-	}
-	public bool SignIn(string ID, string PW)
-	{
-		RedisValue userData = _db.StringGet( ID );
-		if( userData.IsNullOrEmpty == true  )
-		{
-			return false;
-		}
+    public RedisDB( IConnectionMultiplexer redis )
+    {
+        _redis = redis;
+        _db = redis.GetDatabase();
+    }
+    public string SignIn( string ID, string PW, string ipAddress )
+    {
+        RedisValue userData = _db.StringGet( ID );
 
-		USERINFO userInfo = JsonConvert.DeserializeObject<USERINFO>( userData );
+        if( userData.IsNullOrEmpty == true )
+        {
+            throw new Exception( "Not Member!" );
+        }
 
-		if( userInfo.PW == PW )
-		{
-			userInfo.AccessToken = "2";
-			userInfo.RefreshToken = "2";
-			userInfo.IdToken = "2";
-			string jsonInfo = JsonConvert.SerializeObject( userInfo );
-			_db.StringSet( "testID", jsonInfo );
-			return true;
-		}
+        USERINFO userInfo = JsonConvert.DeserializeObject<USERINFO>( userData );
 
-		return false;
-	}
+        if( SecurityUtils.VerifyHashPassword( PW, userInfo.PW ) == false )
+        {
+            return "FAIL_PASSWORD_NOT_EQAUL";
+        }
 
-	public void SignUp()
-	{
-		USERINFO info = new USERINFO();
-		info.ID = "testID";
-		info.PW = "testPW";
-		info.AccessToken = "1";
-		info.RefreshToken = "1";
-		info.IdToken = "1";
+        userInfo.AccessToken = SecurityUtils.GenerateAccessToken( ID );
+        userInfo.RefreshToken = SecurityUtils.GenerateRefreshToken( ipAddress );
+        userInfo.ConnectedIP = ipAddress;
+        string jsonInfo = JsonConvert.SerializeObject( userInfo );
+        _db.StringSet( "testID", jsonInfo );
 
-		string jsonInfo = JsonConvert.SerializeObject( info );
+        userInfo.PW = string.Empty;
 
-		_db.StringSet( "testID", jsonInfo );
-	}
+        return JsonConvert.SerializeObject( userInfo );
+    }
 
-	
+    public void SignUp()
+    {
+        USERINFO info = new USERINFO();
+        info.ID = "testID";
+        info.PW = SecurityUtils.GenerateHashPassword( "testPW" );
+        info.AccessToken = string.Empty;
+        info.RefreshToken = null;
+        info.ConnectedIP = null;
+
+        string jsonInfo = JsonConvert.SerializeObject( info );
+
+        _db.StringSet( "testID", jsonInfo );
+    }
+
+
 }

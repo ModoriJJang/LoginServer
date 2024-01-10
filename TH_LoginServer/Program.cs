@@ -9,6 +9,9 @@ builder.Services.AddSingleton<StackExchange.Redis.IConnectionMultiplexer>( c =>
 
 builder.Services.AddSingleton( serviceProvider => ( new RedisDB(serviceProvider.GetRequiredService<StackExchange.Redis.IConnectionMultiplexer>()) ) );
 
+builder.Services.AddSingleton<Microsoft.AspNetCore.Http.IHttpContextAccessor, Microsoft.AspNetCore.Http.HttpContextAccessor>();
+builder.Services.AddMvc().SetCompatibilityVersion(Microsoft.AspNetCore.Mvc.CompatibilityVersion.Version_2_1);
+
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
