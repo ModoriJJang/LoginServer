@@ -11,7 +11,7 @@ public class RedisDB
         public string ID;
         public string PW;
         public string AccessToken;
-        public SecurityUtils.RefreshToken RefreshToken;
+        public string RefreshToken;
         public string ConnectedIP;
     }
 
@@ -40,7 +40,7 @@ public class RedisDB
         userInfo.RefreshToken = SecurityUtils.GenerateRefreshToken( ipAddress );
         userInfo.ConnectedIP = ipAddress;
         string jsonInfo = JsonConvert.SerializeObject( userInfo );
-        _db.StringSet( "testID", jsonInfo );
+        _db.StringSet( ID, jsonInfo );
 
         userInfo.PW = string.Empty;
 
@@ -61,5 +61,43 @@ public class RedisDB
         _db.StringSet( ID, jsonInfo );
     }
 
+    public string ReissueAccessToken(string userID, string ipAddress)
+    {
+        RedisValue userData = _db.StringGet( userID );
+        if( userData.IsNullOrEmpty == true )
+        {
+            throw new Exception( "Not Member!" );
+        }
+
+        USERINFO userInfo = JsonConvert.DeserializeObject<USERINFO>( userData );
+        userInfo.AccessToken = SecurityUtils.GenerateAccessToken( userID );
+        userInfo.ConnectedIP = ipAddress;
+
+        string jsonInfo = JsonConvert.SerializeObject( userInfo );
+
+        _db.StringSet( "testID", jsonInfo );
+        userInfo.PW = string.Empty;
+
+        return JsonConvert.SerializeObject( userInfo );
+    }
+    public string ReissueRefreshToken(string userID, string ipAddress)
+    {
+        RedisValue userData = _db.StringGet( userID );
+        if( userData.IsNullOrEmpty == true )
+        {
+            throw new Exception( "Not Member!" );
+        }
+
+        USERINFO userInfo = JsonConvert.DeserializeObject<USERINFO>( userData );
+        userInfo.RefreshToken = SecurityUtils.GenerateRefreshToken( ipAddress );
+        userInfo.ConnectedIP = ipAddress;
+
+        string jsonInfo = JsonConvert.SerializeObject( userInfo );
+
+        _db.StringSet( "testID", jsonInfo );
+        userInfo.PW = string.Empty;
+
+        return JsonConvert.SerializeObject( userInfo );
+    }
 
 }

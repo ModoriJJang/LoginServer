@@ -1,4 +1,5 @@
 ﻿using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -44,15 +45,54 @@ public class SecurityUtils
         JwtSecurityTokenHandler handler = new JwtSecurityTokenHandler();
         JwtSecurityToken token = handler.CreateJwtSecurityToken( descriptor );
 
-        string refreshToken = handler.WriteToken( token );
+        string accessToken = handler.WriteToken( token );
 
-        return refreshToken;
+        return accessToken;
     }
 
-    public static RefreshToken GenerateRefreshToken( string ipAddress )
+    public static bool ValidateAccessToken( string token )
+    {
+        string accessSecretKey = _secretKey;
+        SymmetricSecurityKey securityKey = new SymmetricSecurityKey( System.Text.Encoding.UTF8.GetBytes( accessSecretKey ) );
+
+        JwtSecurityTokenHandler handler = new JwtSecurityTokenHandler();
+
+        TokenValidationParameters validationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = securityKey,
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = false,
+            ClockSkew = TimeSpan.Zero,
+        };
+
+        handler.ValidateToken( token, validationParameters, out SecurityToken validatedToken );
+        if( validatedToken == null )
+        {
+            throw new Exception( "FAIL_NOT_EQUAL_TOKENINFO" );
+        }
+
+        JwtSecurityToken jwtToken = (JwtSecurityToken)validatedToken;
+
+        bool LifeTimeCheck = jwtToken.ValidTo > DateTime.UtcNow;
+
+        return LifeTimeCheck;
+    }
+
+    public static string GenerateRefreshToken( string ipAddress )
     {
         RefreshToken refreshToken = new RefreshToken( ipAddress );
-        return refreshToken;
+        string token = JsonConvert.SerializeObject( refreshToken );
+        return token;
+    }
+
+    public static bool ValidateRefreshToken( string token )
+    {
+        RefreshToken refreshToken = JsonConvert.DeserializeObject<RefreshToken>( token );
+
+        bool LifeTimeCheck = refreshToken.Expires > DateTime.UtcNow;
+        return LifeTimeCheck;
     }
 
     public static string GenerateHashPassword( string data )
@@ -68,4 +108,6 @@ public class SecurityUtils
         string hashString = HASHKEY + data;
         return BCrypt.Net.BCrypt.Verify( hashString, hashData );
     }
+
+
 }

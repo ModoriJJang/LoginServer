@@ -44,6 +44,39 @@ namespace TH_LoginServer.Controllers
             return Ok( "" );
         }
 
+        [Route( "api/[controller]/ValidataToken" )]
+        [HttpPost]
+        public IActionResult ValidataToken([FromBody] TokenData data, RedisDB redisDB, IHttpContextAccessor httpContextAccessor )
+        {
+            try
+            {
+                string ipAddress = httpContextAccessor.HttpContext.Connection.RemoteIpAddress.ToString();
+                string returnJson = string.Empty;
+
+                bool ValidateAccessTokenCheck = SecurityUtils.ValidateAccessToken( data.AccessToken );
+                bool ValidateRefreshTokenCheck = SecurityUtils.ValidateRefreshToken( data.RefreshToken );
+
+                if( ValidateAccessTokenCheck == false && ValidateRefreshTokenCheck == true )
+                {
+                    returnJson = redisDB.ReissueAccessToken( data.ID, ipAddress );
+                }
+                else if( ValidateAccessTokenCheck == true && ValidateRefreshTokenCheck == false )
+                {
+                    returnJson = redisDB.ReissueRefreshToken( data.ID, ipAddress );
+                }
+                else
+                {
+                    return Ok( "ReEnterSessionPlease" );
+                }
+                
+                return Ok( returnJson );
+            }
+            catch( Exception ex )
+            {
+                return BadRequest( ex.Message );
+            }
+        }
+
         public class SignInData()
         {
             public string ID { get; set; } = string.Empty;
@@ -56,6 +89,13 @@ namespace TH_LoginServer.Controllers
             public string ID { get; set; } = string.Empty;
             public string PW { get; set; } = string.Empty;
             public string Client { get; set; } = string.Empty;
+        }
+
+        public class TokenData
+        {
+            public string ID { get; set; } = string.Empty;
+            public string AccessToken { get; set; } = string.Empty;
+            public string RefreshToken { get; set; } = string.Empty;
         }
     }
 }
