@@ -44,6 +44,8 @@ public class RedisDB
 
         userInfo.PW = string.Empty;
 
+        gRPC_System.Login_Server( ID, userInfo.AccessToken );
+
         return JsonConvert.SerializeObject( userInfo );
     }
 

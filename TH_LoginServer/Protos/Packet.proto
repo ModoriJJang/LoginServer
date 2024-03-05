@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package TH_SERVER;
+
+option csharp_namespace = "gRPC_Client";
+
+service RPC_System {
+  rpc RPC_Login (Login_Send) returns (Login_Recv) {}
+}
+
+message Login_Send{
+    string clientid = 1;
+    string token = 2;
+}
+
+message Login_Recv{
+    string message = 1;
+}
+
+
